@@ -62,8 +62,7 @@ func InitLog() {
 }
 
 func InitDB() {
-	dataPath, _ := config.Config.Get("data_path")
-	dbPath := filepath.Join(dataPath, "data.db")
+	dbPath := filepath.Join(config.Config.DataPath, "data.db")
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		panic(err)

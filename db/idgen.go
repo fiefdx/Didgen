@@ -22,11 +22,7 @@ func NewIdGenerator(key string) (*IdGenerator, error) {
 		return nil, fmt.Errorf("key is empty")
 	}
 	idgen.key = key
-	batchSizeTmp, err := config.Config.GetInt("batch_size")
-	if err != nil {
-		return nil, fmt.Errorf("fetch batch_size error")
-	}
-	idgen.batchSize = batchSizeTmp
+	idgen.batchSize = config.Config.BatchSize
 	idgen.cur = 0
 	idgen.batchMax = idgen.cur
 	return idgen, nil

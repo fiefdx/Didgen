@@ -12,39 +12,26 @@ import (
 	logger "Didgen/logger_seelog"
 	"Didgen/server"
 	"github.com/cihub/seelog"
-	"github.com/go-gypsy/yaml"
 	_ "net/http/pprof"
 )
 
 var Log seelog.LoggerInterface
-var Config *yaml.File
-var ServerHost string
-var ServerPort string
-var Threads int
 
 func init() {
 	configPath := "./configuration.yml"
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		fmt.Printf("Init Config (%s) error: (%s) does not exist!\n", configPath)
+		fmt.Printf("Init Config error: (%s) does not exist!\n", configPath)
 		os.Exit(1)
 	} else {
-		Config = config.GetConfig(configPath)
+		err = config.Init(configPath)
+		if err != nil {
+			fmt.Printf("Init Config failed: (%s), error: %v!\n", configPath, err)
+			os.Exit(1)
+		}
 	}
 
-	logPath, err := Config.Get("log_path")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['log_path'] error: %s\n", err))
-		os.Exit(1)
-	}
-
-	logLevel, err := Config.Get("log_level")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['log_level'] error: %s\n", err))
-		os.Exit(1)
-	}
-
-	Logger, err := logger.NewLogger("main", logPath, "didgen.log", logLevel, "size", "20971520", "5", true)
+	Logger, err := logger.NewLogger("main", config.Config.LogPath, "didgen.log", config.Config.LogLevel, "size", "20971520", "5", true)
 	if err != nil {
 		fmt.Printf(fmt.Sprintf("Init logger error: %s\n", err))
 		os.Exit(1)
@@ -54,48 +41,23 @@ func init() {
 	db.InitLog()
 	server.InitLog()
 
-	tmp_server_host, err := Config.Get("server_host")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['server_host'] error: %s\n", err))
-		os.Exit(1)
-	}
-	ServerHost = tmp_server_host
-
-	tmp_server_port, err := Config.Get("server_port")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['server_host'] error: %s\n", err))
-		os.Exit(1)
-	}
-	ServerPort = string(tmp_server_port)
-
-	dataPath, err := Config.Get("data_path")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['data_path'] error: %s\n", err))
-		os.Exit(1)
-	}
-
-	threads_tmp, err := Config.GetInt("threads")
-	if err != nil {
-		fmt.Printf(fmt.Sprintf("Get Config['threads'] error: %s\n", err))
-		os.Exit(1)
-	}
-	Threads = int(threads_tmp)
-
-	threads := runtime.GOMAXPROCS(Threads)
+	threads := runtime.GOMAXPROCS(config.Config.Threads)
 	Log.Info(fmt.Sprintf("Server with threads: %d", threads))
 	Log.Info(fmt.Sprintf("Server config path: %s", configPath))
-	Log.Info(fmt.Sprintf("Server log path: %s", logPath))
-	Log.Info(fmt.Sprintf("Server log level: %s", logLevel))
-	Log.Info(fmt.Sprintf("Server host: %s", ServerHost))
-	Log.Info(fmt.Sprintf("Server port: %s", ServerPort))
-	Log.Info(fmt.Sprintf("Server data path: %s", dataPath))
+	Log.Info(fmt.Sprintf("Server log path: %s", config.Config.LogPath))
+	Log.Info(fmt.Sprintf("Server log level: %s", config.Config.LogLevel))
+	Log.Info(fmt.Sprintf("Server host: %s", config.Config.ServerHost))
+	Log.Info(fmt.Sprintf("Server port: %s", config.Config.ServerPort))
+	Log.Info(fmt.Sprintf("Server data path: %s", config.Config.DataPath))
+	Log.Info(fmt.Sprintf("Server batch_size: %d", config.Config.BatchSize))
+	Log.Info(fmt.Sprintf("Server nodes: %v", config.Config.Nodes))
 }
 
 func main() {
 	Log.Info("Start Service")
 	db.InitDB()
 	var s *server.Server
-	s, err := server.NewServer(ServerHost, ServerPort)
+	s, err := server.NewServer(config.Config.ServerHost, config.Config.ServerPort)
 	if err != nil {
 		Log.Error(fmt.Sprintf("Create Server, error: %v", err))
 		s.Close()
