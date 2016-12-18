@@ -68,7 +68,7 @@ func (s *Server) Serve() error {
 	s.running = true
 	for s.running {
 		conn, err := s.listener.Accept()
-		if err != nil {
+		if s.running && err != nil {
 			Log.Error(fmt.Sprintf("Server Run error: %v", err))
 			continue
 		}

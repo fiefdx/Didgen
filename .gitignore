@@ -4,3 +4,4 @@
 didgen
 *.db
 data/*
+lib/pkg/*
