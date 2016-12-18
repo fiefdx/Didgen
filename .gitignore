@@ -1,5 +1,6 @@
 *.log
 *.log.*
+*.pyc
 didgen
 *.db
 data/*
