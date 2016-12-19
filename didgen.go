@@ -55,7 +55,7 @@ func init() {
 
 func main() {
 	Log.Info("Start Service")
-	db.InitDB()
+	db.InitData()
 	var s *server.Server
 	s, err := server.NewServer(config.Config.ServerHost, config.Config.ServerPort)
 	if err != nil {

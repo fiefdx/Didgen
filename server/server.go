@@ -42,15 +42,15 @@ func NewServer(host, port string) (*Server, error) {
 
 func (s *Server) Init() error {
 	var err error
-	err = db.CreateKeysRecordTable(false)
+	err = db.DATA.CreateKeysRecordTable(false)
 	if err != nil {
 		return err
 	}
-	keys, err := db.GetKeysFromRecordTable()
+	keys, err := db.DATA.GetKeysFromRecordTable()
 	for _, key := range keys {
 		idgen, ok := s.keyGeneratorMap[key]
 		if !ok {
-			err = db.CreateKeyTable(key)
+			err = db.DATA.CreateKeyTable(key)
 			if err != nil {
 				return err
 			}
@@ -137,11 +137,11 @@ func (s *Server) Close() {
 }
 
 func (s *Server) IsKeyExist(key string) (bool, error) {
-	_, err := db.GetKeyFromRecordTable(key)
+	_, err := db.DATA.GetKeyFromRecordTable(key)
 	if err != nil {
 		return false, err
 	}
-	_, err = db.GetKey(key)
+	_, err = db.DATA.GetKey(key)
 	if err != nil {
 		return false, err
 	}
@@ -149,13 +149,13 @@ func (s *Server) IsKeyExist(key string) (bool, error) {
 }
 
 func (s *Server) GetKey(key string) (string, error) {
-	return db.GetKeyFromRecordTable(key)
+	return db.DATA.GetKeyFromRecordTable(key)
 }
 
 func (s *Server) SetKey(key string) error {
-	return db.AddKeyToRecordTable(key)
+	return db.DATA.AddKeyToRecordTable(key)
 }
 
 func (s *Server) DelKey(key string) error {
-	return db.DeleteKeyFromRecordTable(key)
+	return db.DATA.DeleteKeyFromRecordTable(key)
 }

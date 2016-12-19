@@ -29,7 +29,7 @@ func NewIdGenerator(key string) (*IdGenerator, error) {
 }
 
 func (g *IdGenerator) getIdFromDB() (int64, error) {
-	id, err := GetKey(g.key)
+	id, err := DATA.GetKey(g.key)
 	if err != nil {
 		return 0, err
 	}
@@ -48,11 +48,11 @@ func (g *IdGenerator) Next() (int64, error) {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if g.batchMax < g.cur+1 {
-		id, err = GetKey(g.key)
+		id, err = DATA.GetKey(g.key)
 		if err != nil {
 			return 0, err
 		}
-		err = IncrKey(g.key, g.batchSize)
+		err = DATA.IncrKey(g.key, g.batchSize)
 		if err != nil {
 			return 0, err
 		}
@@ -68,18 +68,18 @@ func (g *IdGenerator) Reset(value int64, force bool) error {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if force {
-		err = DeleteKeyTable(g.key)
+		err = DATA.DeleteKeyTable(g.key)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = CreateKeyTable(g.key)
+	err = DATA.CreateKeyTable(g.key)
 	if err != nil {
 		return err
 	}
 
-	err = ResetKeyTable(g.key, value)
+	err = DATA.ResetKeyTable(g.key, value)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (g *IdGenerator) Reset(value int64, force bool) error {
 func (g *IdGenerator) Delete() error {
 	g.lock.Lock()
 	defer g.lock.Unlock()
-	err := DeleteKeyTable(g.key)
+	err := DATA.DeleteKeyTable(g.key)
 	if err != nil {
 		return err
 	}
