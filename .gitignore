@@ -3,5 +3,4 @@
 *.pyc
 didgen
 *.db
-data/*
 lib/pkg/*
