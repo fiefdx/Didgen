@@ -24,21 +24,17 @@ const (
 	SelectKeysStmt = "SELECT k FROM %s"
 	DeleteKeyStmt  = "DELETE FROM %s WHERE k = '%s'"
 
-	KeyPrefixFmt = "idgen_%s"
-	//create key table
+	KeyPrefixFmt       = "idgen_%s"
 	CreateKeyTableStmt = `
 	CREATE TABLE %s (
 		id bigint,
 		PRIMARY KEY  (id)
 	)`
-
-	//create key table if not exist
 	CreateKeyTableNTStmt = `
 	CREATE TABLE IF NOT EXISTS %s (
 		id bigint,
 		PRIMARY KEY  (id)
 	)`
-
 	DropTableStmt    = `DROP TABLE IF EXISTS %s`
 	InsertIdStmt     = "INSERT INTO %s (id) VALUES (%d)"
 	SelectIdStmt     = "SELECT id FROM %s"

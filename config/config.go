@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"os"
 
+	"Didgen/model"
 	"github.com/go-gypsy/yaml"
 )
 
 var ConfigFile *yaml.File
-var Config *ServerConfig
+var Config *model.ServerConfig
 
 func Init(config_path string) error {
 	cfg, err := GetConfigFile(config_path)
@@ -44,13 +45,13 @@ func GetConfigFile(config_path string) (*yaml.File, error) {
 	return ConfigFile, nil
 }
 
-func GetConfig(cfg *yaml.File) (*ServerConfig, error) {
+func GetConfig(cfg *yaml.File) (*model.ServerConfig, error) {
 	if Config != nil {
 		return Config, nil
 	}
 
 	var err error
-	Config = new(ServerConfig)
+	Config = new(model.ServerConfig)
 
 	Config.LogPath, err = cfg.Get("log_path")
 	if err != nil {

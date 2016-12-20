@@ -2,7 +2,9 @@ package server
 
 import (
 	"strconv"
+	"strings"
 
+	"Didgen/config"
 	"Didgen/db"
 )
 
@@ -11,6 +13,7 @@ func (s *Server) handleGet(r *Request) Reply {
 	var ok bool
 	var id int64
 	var err error
+	var idStr string
 
 	if r.HasArgument(0) == false {
 		return ErrNotEnoughArgs
@@ -20,25 +23,39 @@ func (s *Server) handleGet(r *Request) Reply {
 	if len(key) == 0 {
 		return ErrNoKey
 	}
-	s.Lock()
-	idgen, ok = s.keyGeneratorMap[key]
 
-	if ok == false {
+	if strings.HasPrefix(key, db.ConfigPrefix) {
+		k := key[len(db.ConfigPrefix):]
+		idStr, err = config.Config.Get(k)
+		if err != nil {
+			return &BulkReply{
+				value: nil,
+			}
+		}
+		return &StatusReply{
+			code: idStr,
+		}
+	} else {
+		s.Lock()
+		idgen, ok = s.keyGeneratorMap[key]
+
+		if ok == false {
+			s.Unlock()
+			return &BulkReply{
+				value: nil,
+			}
+		}
+
 		s.Unlock()
-		return &BulkReply{
-			value: nil,
+		id, err = idgen.Next()
+		if err != nil {
+			return &ErrorReply{
+				message: err.Error(),
+			}
 		}
+		idStr = strconv.FormatInt(id, 10)
 	}
 
-	s.Unlock()
-	id, err = idgen.Next()
-	if err != nil {
-		return &ErrorReply{
-			message: err.Error(),
-		}
-	}
-
-	idStr := strconv.FormatInt(id, 10)
 	return &BulkReply{
 		value: []byte(idStr),
 	}
@@ -58,35 +75,51 @@ func (s *Server) handleSet(r *Request) Reply {
 	if len(key) == 0 {
 		return ErrNoKey
 	}
-	value, errReply := r.GetInt(1)
-	if errReply != nil {
-		return errReply
-	}
-	s.Lock()
-	idgen, ok = s.keyGeneratorMap[key]
-	if ok == false {
-		idgen, err = db.NewIdGenerator(key)
+
+	if strings.HasPrefix(key, db.ConfigPrefix) {
+		k := key[len(db.ConfigPrefix):]
+		value, errReply := r.GetString(1)
+		if errReply != nil {
+			return errReply
+		}
+		err = db.CONFIG.Set(k, value)
 		if err != nil {
-			s.Unlock()
 			return &ErrorReply{
 				message: err.Error(),
 			}
 		}
-		s.keyGeneratorMap[key] = idgen
-	}
-
-	s.Unlock()
-	err = s.SetKey(key)
-	if err != nil {
-		return &ErrorReply{
-			message: err.Error(),
+	} else {
+		value, errReply := r.GetInt(1)
+		if errReply != nil {
+			return errReply
 		}
-	}
 
-	err = idgen.Reset(value, false)
-	if err != nil {
-		return &ErrorReply{
-			message: err.Error(),
+		s.Lock()
+		idgen, ok = s.keyGeneratorMap[key]
+		if ok == false {
+			idgen, err = db.NewIdGenerator(key)
+			if err != nil {
+				s.Unlock()
+				return &ErrorReply{
+					message: err.Error(),
+				}
+			}
+			s.keyGeneratorMap[key] = idgen
+		}
+
+		s.Unlock()
+		err = s.SetKey(key)
+		if err != nil {
+			return &ErrorReply{
+				message: err.Error(),
+			}
+		}
+
+		err = idgen.Reset(value, false)
+		if err != nil {
+			return &ErrorReply{
+				message: err.Error(),
+			}
 		}
 	}
 

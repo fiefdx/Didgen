@@ -38,6 +38,14 @@ func (r *Request) GetInt(index int) (int64, *ErrorReply) {
 	}
 }
 
+func (r *Request) GetString(index int) (string, *ErrorReply) {
+	if errReply := r.ExpectArgument(index); errReply != nil {
+		return "", errReply
+	}
+	v := string(r.Arguments[index])
+	return v, nil
+}
+
 func NewRequest(conn io.ReadCloser) (*Request, error) {
 	reader := bufio.NewReader(conn)
 

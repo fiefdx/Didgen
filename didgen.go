@@ -39,6 +39,7 @@ func init() {
 	Log = *Logger
 
 	db.InitLog()
+	db.InitConfig()
 	server.InitLog()
 
 	threads := runtime.GOMAXPROCS(config.Config.Threads)
