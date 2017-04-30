@@ -9,6 +9,7 @@ import (
 	"Didgen/db"
 	logger "Didgen/logger_seelog"
 	"github.com/cihub/seelog"
+	"time"
 )
 
 var Log seelog.LoggerInterface
@@ -22,7 +23,7 @@ func InitLog() {
 }
 
 type Server struct {
-	listener        net.Listener
+	listener        *net.TCPListener
 	keyGeneratorMap map[string]*db.IdGenerator
 	sync.RWMutex
 	running bool
@@ -31,10 +32,15 @@ type Server struct {
 func NewServer(host, port string) (*Server, error) {
 	var err error
 	s := new(Server)
-	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%s", host, port))
+	tcpaddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%s", host, port))
 	if err != nil {
 		return nil, err
 	}
+	listener, err := net.ListenTCP("tcp", tcpaddr)
+	if err != nil {
+		return nil, err
+	}
+	s.listener = listener
 	s.keyGeneratorMap = make(map[string]*db.IdGenerator)
 	Log.Info(fmt.Sprintf("NewServer(%s:%s)", host, port))
 	return s, nil
@@ -67,13 +73,17 @@ func (s *Server) Init() error {
 func (s *Server) Serve() error {
 	s.running = true
 	for s.running {
+		s.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		conn, err := s.listener.Accept()
-		if s.running && err != nil {
-			Log.Error(fmt.Sprintf("Server Run error: %v", err))
+		if err != nil {
+			if opErr, ok := err.(*net.OpError); ok && !opErr.Timeout() {
+				Log.Error(fmt.Sprintf("Server Run error: %v", err))
+			}
 			continue
 		}
 		go s.onConn(conn)
 	}
+	s.listener.Close()
 	return nil
 }
 
@@ -130,9 +140,6 @@ func (s *Server) ServeRequest(request *Request) Reply {
 
 func (s *Server) Close() {
 	s.running = false
-	if s.listener != nil {
-		s.listener.Close()
-	}
 	Log.Info("Server closed")
 }
 
