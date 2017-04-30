@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"Didgen/config"
+	log "Didgen/logger_seelog"
 	"Didgen/model"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -68,21 +69,21 @@ func (c *Config) CreateConfigTable(force bool) error {
 		sqlStmt := fmt.Sprintf(DropTableStmt, ConfigTableName)
 		_, err := c.DB.Exec(sqlStmt)
 		if err != nil {
-			Log.Error(fmt.Sprintf("Config.CreateConfigTable with force, error: %v", err))
+			log.Error(fmt.Sprintf("Config.CreateConfigTable with force, error: %v", err))
 			return err
 		}
 	}
 	sqlStmt := fmt.Sprintf(CreateConfigTableNTStmt, ConfigTableName)
 	_, err := c.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Error(fmt.Sprintf("Config.CreateConfigTable without force, error: %v", err))
+		log.Error(fmt.Sprintf("Config.CreateConfigTable without force, error: %v", err))
 		return err
 	}
 
 	sqlStmt = fmt.Sprintf(RowCountStmt, ConfigTableName)
 	rows, err := c.DB.Query(sqlStmt)
 	if err != nil {
-		Log.Error(fmt.Sprintf("Config.CreateConfigTable, count error: %v", err))
+		log.Error(fmt.Sprintf("Config.CreateConfigTable, count error: %v", err))
 		return err
 	}
 	defer rows.Close()
@@ -90,7 +91,7 @@ func (c *Config) CreateConfigTable(force bool) error {
 	for rows.Next() {
 		err = rows.Scan(&rowCount)
 		if err != nil {
-			Log.Error(fmt.Sprintf("Config.CreateConfigTable, count error: %v", err))
+			log.Error(fmt.Sprintf("Config.CreateConfigTable, count error: %v", err))
 			return err
 		}
 	}
@@ -99,7 +100,7 @@ func (c *Config) CreateConfigTable(force bool) error {
 		sqlStmt = fmt.Sprintf(InsertConfigStmt, ConfigTableName)
 		_, err = c.DB.Exec(sqlStmt)
 		if err != nil {
-			Log.Error(fmt.Sprintf("Config.CreateConfigTable, insert value error: %v", err))
+			log.Error(fmt.Sprintf("Config.CreateConfigTable, insert value error: %v", err))
 			return err
 		}
 		cfg := make(map[string]interface{})
@@ -129,7 +130,7 @@ func (c *Config) Update(keys map[string]interface{}) error {
 			if strings.Contains(strings.ToLower(err.Error()), "unique constraint") {
 				return nil
 			}
-			Log.Error(fmt.Sprintf("Config.Update key: '%s', error: %v", key, err))
+			log.Error(fmt.Sprintf("Config.Update key: '%s', error: %v", key, err))
 			return err
 		}
 	}
@@ -154,7 +155,7 @@ func (c *Config) UpdateConfig() error {
 		&result.DataPath,
 		&result.BatchSize)
 	if err != nil {
-		Log.Error(fmt.Sprintf("Config.UpdateConfig, error: %v", err))
+		log.Error(fmt.Sprintf("Config.UpdateConfig, error: %v", err))
 		return err
 	}
 	config.Config.LogLevel = result.LogLevel

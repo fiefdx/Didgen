@@ -9,13 +9,10 @@ import (
 
 	"Didgen/config"
 	"Didgen/db"
-	logger "Didgen/logger_seelog"
+	log "Didgen/logger_seelog"
 	"Didgen/server"
-	"github.com/cihub/seelog"
 	_ "net/http/pprof"
 )
-
-var Log seelog.LoggerInterface
 
 func init() {
 	configPath := "./configuration.yml"
@@ -31,43 +28,40 @@ func init() {
 		}
 	}
 
-	Logger, err := logger.NewLogger("main", config.Config.LogPath, "didgen.log", config.Config.LogLevel, "size", "20971520", "5", true)
+	_, err := log.NewLogger("main", config.Config.LogPath, "didgen.log", config.Config.LogLevel, "size", "20971520", "5", true)
 	if err != nil {
 		fmt.Printf(fmt.Sprintf("Init logger error: %s\n", err))
 		os.Exit(1)
 	}
-	Log = *Logger
 
-	db.InitLog()
 	db.InitConfig()
-	server.InitLog()
 
 	threads := runtime.GOMAXPROCS(config.Config.Threads)
-	Log.Info(fmt.Sprintf("Server with threads: %d", threads))
-	Log.Info(fmt.Sprintf("Server config path: %s", configPath))
-	Log.Info(fmt.Sprintf("Server log path: %s", config.Config.LogPath))
-	Log.Info(fmt.Sprintf("Server log level: %s", config.Config.LogLevel))
-	Log.Info(fmt.Sprintf("Server host: %s", config.Config.ServerHost))
-	Log.Info(fmt.Sprintf("Server port: %s", config.Config.ServerPort))
-	Log.Info(fmt.Sprintf("Server data path: %s", config.Config.DataPath))
-	Log.Info(fmt.Sprintf("Server batch_size: %d", config.Config.BatchSize))
-	Log.Info(fmt.Sprintf("Server nodes: %v", config.Config.Nodes))
+	log.Info(fmt.Sprintf("Server with threads: %d", threads))
+	log.Info(fmt.Sprintf("Server config path: %s", configPath))
+	log.Info(fmt.Sprintf("Server log path: %s", config.Config.LogPath))
+	log.Info(fmt.Sprintf("Server log level: %s", config.Config.LogLevel))
+	log.Info(fmt.Sprintf("Server host: %s", config.Config.ServerHost))
+	log.Info(fmt.Sprintf("Server port: %s", config.Config.ServerPort))
+	log.Info(fmt.Sprintf("Server data path: %s", config.Config.DataPath))
+	log.Info(fmt.Sprintf("Server batch_size: %d", config.Config.BatchSize))
+	log.Info(fmt.Sprintf("Server nodes: %v", config.Config.Nodes))
 }
 
 func main() {
-	Log.Info("Start Service")
+	log.Info("Start Service")
 	db.InitData()
 	var s *server.Server
 	s, err := server.NewServer(config.Config.ServerHost, config.Config.ServerPort)
 	if err != nil {
-		Log.Error(fmt.Sprintf("Create Server, error: %v", err))
+		log.Error(fmt.Sprintf("Create Server, error: %v", err))
 		s.Close()
 		os.Exit(1)
 	}
 
 	err = s.Init()
 	if err != nil {
-		Log.Error(fmt.Sprintf("Init Server error: %v", err))
+		log.Error(fmt.Sprintf("Init Server error: %v", err))
 		s.Close()
 		os.Exit(1)
 	}
@@ -77,12 +71,12 @@ func main() {
 
 	go func() {
 		sig := <-sc
-		Log.Info(fmt.Sprintf("Got signal: %v", sig))
+		log.Info(fmt.Sprintf("Got signal: %v", sig))
 		s.Close()
 	}()
-	Log.Info(fmt.Sprintf("Server running!"))
+	log.Info(fmt.Sprintf("Server running!"))
 	s.Serve()
 
-	Log.Info("Close Service")
+	log.Info("Close Service")
 	os.Exit(0)
 }

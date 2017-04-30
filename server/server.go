@@ -7,20 +7,9 @@ import (
 	"sync"
 
 	"Didgen/db"
-	logger "Didgen/logger_seelog"
-	"github.com/cihub/seelog"
+	log "Didgen/logger_seelog"
 	"time"
 )
-
-var Log seelog.LoggerInterface
-
-func InitLog() {
-	Logger, err := logger.GetLogger("main")
-	if err != nil {
-		panic(fmt.Errorf("GetLogger error: %s\n", err))
-	}
-	Log = *Logger
-}
 
 type Server struct {
 	listener        *net.TCPListener
@@ -42,7 +31,7 @@ func NewServer(host, port string) (*Server, error) {
 	}
 	s.listener = listener
 	s.keyGeneratorMap = make(map[string]*db.IdGenerator)
-	Log.Info(fmt.Sprintf("NewServer(%s:%s)", host, port))
+	log.Info(fmt.Sprintf("NewServer(%s:%s)", host, port))
 	return s, nil
 }
 
@@ -77,7 +66,7 @@ func (s *Server) Serve() error {
 		conn, err := s.listener.Accept()
 		if err != nil {
 			if opErr, ok := err.(*net.OpError); ok && !opErr.Timeout() {
-				Log.Error(fmt.Sprintf("Server Run error: %v", err))
+				log.Error(fmt.Sprintf("Server Run error: %v", err))
 			}
 			continue
 		}
@@ -95,7 +84,7 @@ func (s *Server) onConn(conn net.Conn) error {
 			const size = 4096
 			buf := make([]byte, size)
 			buf = buf[:runtime.Stack(buf, false)] //获得当前goroutine的stacktrace
-			Log.Error(fmt.Sprintf("Server onConn remoteAddr[%v], stack[%v], error: %v", clientAddr, string(buf), err))
+			log.Error(fmt.Sprintf("Server onConn remoteAddr[%v], stack[%v], error: %v", clientAddr, string(buf), err))
 			reply := &ErrorReply{
 				message: err.Error(),
 			}
@@ -112,7 +101,7 @@ func (s *Server) onConn(conn net.Conn) error {
 
 		reply := s.ServeRequest(request)
 		if _, err := reply.WriteTo(conn); err != nil {
-			Log.Error(fmt.Sprint("server onConn reply write error: %v", err))
+			log.Error(fmt.Sprint("server onConn reply write error: %v", err))
 			return err
 		}
 	}
@@ -140,7 +129,7 @@ func (s *Server) ServeRequest(request *Request) Reply {
 
 func (s *Server) Close() {
 	s.running = false
-	Log.Info("Server closed")
+	log.Info("Server closed")
 }
 
 func (s *Server) IsKeyExist(key string) (bool, error) {

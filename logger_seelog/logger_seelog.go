@@ -46,6 +46,38 @@ func init() {
 	DisableLog()
 }
 
+func Debug(v ...interface{}) {
+	Log.Debug(v)
+}
+
+func Info(v ...interface{}) {
+	Log.Info(v)
+}
+
+func Warn(v ...interface{}) {
+	Log.Warn(v)
+}
+
+func Error(v ...interface{}) {
+	Log.Error(v)
+}
+
+func Debugf(format string, params ...interface{}) {
+	Log.Debugf(format, params)
+}
+
+func Infof(format string, params ...interface{}) {
+	Log.Infof(format, params)
+}
+
+func Warnf(format string, params ...interface{}) {
+	Log.Warnf(format, params)
+}
+
+func Errorf(format string, params ...interface{}) {
+	Log.Errorf(format, params)
+}
+
 func DisableLog() {
 	Logger = &seelog.Disabled
 }
@@ -111,6 +143,7 @@ func NewLogger(log_name, log_path, log_file, log_level, rolling_type, max_size, 
 	fmt.Printf("Init logger success\n")
 	// seelog.ReplaceLogger(logger)
 	Loggers[log_name] = &logger
+	Log = logger
 	return &logger, nil
 }
 

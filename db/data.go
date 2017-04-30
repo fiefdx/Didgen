@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"Didgen/config"
-	logger "Didgen/logger_seelog"
-	"github.com/cihub/seelog"
+	log "Didgen/logger_seelog"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -46,19 +45,10 @@ const (
 	BatchCount = 1
 )
 
-var Log seelog.LoggerInterface
 var DATA *Data
 
 type Data struct {
 	DB *sql.DB
-}
-
-func InitLog() {
-	Logger, err := logger.GetLogger("main")
-	if err != nil {
-		panic(fmt.Errorf("GetLogger error: %s\n", err))
-	}
-	Log = *Logger
 }
 
 func InitData() {
@@ -83,14 +73,14 @@ func (d *Data) CreateKeysRecordTable(force bool) error {
 		sqlStmt := fmt.Sprintf(DropTableStmt, KeysRecordTableName)
 		_, err := d.DB.Exec(sqlStmt)
 		if err != nil {
-			Log.Info(fmt.Sprintf("Data.CreateKeysRecordTable with force, error: %v", err))
+			log.Info(fmt.Sprintf("Data.CreateKeysRecordTable with force, error: %v", err))
 			return err
 		}
 	}
 	sqlStmt := fmt.Sprintf(CreateRecordTableNTStmt, KeysRecordTableName)
 	_, err := d.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.CreateKeysRecordTable without force, error: %v", err))
+		log.Info(fmt.Sprintf("Data.CreateKeysRecordTable without force, error: %v", err))
 		return err
 	}
 	return nil
@@ -103,7 +93,7 @@ func (d *Data) AddKeyToRecordTable(key string) error {
 		if strings.Contains(strings.ToLower(err.Error()), "unique constraint") {
 			return nil
 		}
-		Log.Info(fmt.Sprintf("Data.AddKeyToRecordTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.AddKeyToRecordTable('%s'), error: %v", key, err))
 		return err
 	}
 	return nil
@@ -115,7 +105,7 @@ func (d *Data) GetKeyFromRecordTable(key string) (string, error) {
 	row := d.DB.QueryRow(sqlStmt)
 	err := row.Scan(&result)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.GetKeyFromRecordTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.GetKeyFromRecordTable('%s'), error: %v", key, err))
 		return "", err
 	}
 	return result, nil
@@ -126,7 +116,7 @@ func (d *Data) GetKeysFromRecordTable() ([]string, error) {
 	sqlStmt := fmt.Sprintf(SelectKeysStmt, KeysRecordTableName)
 	rows, err := d.DB.Query(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.GetKeysFromRecordTable, error: %v", err))
+		log.Info(fmt.Sprintf("Data.GetKeysFromRecordTable, error: %v", err))
 		return result, err
 	}
 	defer rows.Close()
@@ -134,7 +124,7 @@ func (d *Data) GetKeysFromRecordTable() ([]string, error) {
 	for rows.Next() {
 		err = rows.Scan(&key)
 		if err != nil {
-			Log.Error(fmt.Sprintf("Data.GetKeysFromRecordTable, row error: %v", err))
+			log.Error(fmt.Sprintf("Data.GetKeysFromRecordTable, row error: %v", err))
 			return result, err
 		}
 		if key != "" {
@@ -148,7 +138,7 @@ func (d *Data) DeleteKeyFromRecordTable(key string) error {
 	sqlStmt := fmt.Sprintf(DeleteKeyStmt, KeysRecordTableName, key)
 	_, err := d.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.DeleteKeyFromRecordTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.DeleteKeyFromRecordTable('%s'), error: %v", key, err))
 		return err
 	}
 	return nil
@@ -163,13 +153,13 @@ func (d *Data) CreateKeyTable(key string) error {
 	sqlStmt := fmt.Sprintf(CreateKeyTableNTStmt, idKey)
 	_, err := d.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), error: %v", key, err))
 		return err
 	}
 	sqlStmt = fmt.Sprintf(RowCountStmt, idKey)
 	rows, err := d.DB.Query(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), count error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), count error: %v", key, err))
 		return err
 	}
 	defer rows.Close()
@@ -177,7 +167,7 @@ func (d *Data) CreateKeyTable(key string) error {
 	for rows.Next() {
 		err = rows.Scan(&rowCount)
 		if err != nil {
-			Log.Error(fmt.Sprintf("Data.CreateKeyTable('%s'), count error: %v", key, err))
+			log.Error(fmt.Sprintf("Data.CreateKeyTable('%s'), count error: %v", key, err))
 			return err
 		}
 	}
@@ -186,7 +176,7 @@ func (d *Data) CreateKeyTable(key string) error {
 		sqlStmt = fmt.Sprintf(InsertIdStmt, idKey, 0)
 		_, err = d.DB.Exec(sqlStmt)
 		if err != nil {
-			Log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), insert value error: %v", key, err))
+			log.Info(fmt.Sprintf("Data.CreateKeyTable('%s'), insert value error: %v", key, err))
 			return err
 		}
 	}
@@ -199,7 +189,7 @@ func (d *Data) ResetKeyTable(key string, value int64) error {
 	sqlStmt := fmt.Sprintf(UpdateIdStmt, idKey, value)
 	_, err := d.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.ResetKeyTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.ResetKeyTable('%s'), error: %v", key, err))
 		return err
 	}
 	return nil
@@ -210,7 +200,7 @@ func (d *Data) DeleteKeyTable(key string) error {
 	sqlStmt := fmt.Sprintf(DropTableStmt, idKey)
 	_, err := d.DB.Exec(sqlStmt)
 	if err != nil {
-		Log.Info(fmt.Sprintf("Data.DeleteKeyTable('%s'), error: %v", key, err))
+		log.Info(fmt.Sprintf("Data.DeleteKeyTable('%s'), error: %v", key, err))
 		return err
 	}
 	return nil
@@ -221,12 +211,12 @@ func (d *Data) IncrKey(key string, value int64) error {
 	sqlStmt := fmt.Sprintf(UpdateIdIncrStmt, idKey, value)
 	tx, err := d.DB.Begin()
 	if err != nil {
-		Log.Error(fmt.Sprintf("Data.IncrKey('%s'), value: %d, error: %v", key, value, err))
+		log.Error(fmt.Sprintf("Data.IncrKey('%s'), value: %d, error: %v", key, value, err))
 	}
 	_, err = tx.Exec(sqlStmt)
 	if err != nil {
 		tx.Rollback()
-		Log.Error(fmt.Sprintf("Data.IncrKey('%s'), value: %d, error: %v", key, value, err))
+		log.Error(fmt.Sprintf("Data.IncrKey('%s'), value: %d, error: %v", key, value, err))
 		return err
 	}
 	tx.Commit()
@@ -240,7 +230,7 @@ func (d *Data) GetKey(key string) (int64, error) {
 	row := d.DB.QueryRow(sqlStmt)
 	err := row.Scan(&id)
 	if err != nil {
-		Log.Error(fmt.Sprintf("Data.GetKey('%s'), error: %v", key, err))
+		log.Error(fmt.Sprintf("Data.GetKey('%s'), error: %v", key, err))
 		return 0, err
 	}
 	return id, nil
